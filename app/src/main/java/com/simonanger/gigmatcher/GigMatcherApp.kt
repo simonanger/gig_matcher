@@ -15,6 +15,7 @@ import com.simonanger.gigmatcher.model.Gig
 import com.simonanger.gigmatcher.ui.screens.BandDetailScreen
 import com.simonanger.gigmatcher.ui.screens.BandsScreen
 import com.simonanger.gigmatcher.ui.screens.CreateGigScreen
+import com.simonanger.gigmatcher.ui.screens.GigBandsScreen
 import com.simonanger.gigmatcher.ui.screens.HomeScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -61,12 +62,37 @@ fun GigMatcherApp() {
                 CreateGigScreen(
                     onGigCreated = { gig ->
                         gigs = gigs + gig
-                        navController.navigate("home")
+                        navController.navigate("gig_bands/${gig.id}")
                     }
                 )
             }
             composable("bands") {
                 BandsScreen(bands = sampleBands, navController = navController)
+            }
+            composable("gig_bands/{gigId}") { backStackEntry ->
+                val gigId = backStackEntry.arguments?.getString("gigId")
+                val gig = gigs.find { it.id == gigId }
+                gig?.let { currentGig ->
+                    GigBandsScreen(
+                        gig = currentGig,
+                        onBackClick = { navController.navigate("home") },
+                        onBandSelected = { band ->
+                            // Update the gig with the selected band
+                            gigs = gigs.map { g ->
+                                if (g.id == currentGig.id) {
+                                    val updatedSelectedBands = if (g.selectedBands.contains(band)) {
+                                        g.selectedBands - band
+                                    } else {
+                                        g.selectedBands + band
+                                    }
+                                    g.copy(selectedBands = updatedSelectedBands)
+                                } else {
+                                    g
+                                }
+                            }
+                        }
+                    )
+                }
             }
             composable("band_detail/{bandId}") { backStackEntry ->
                 val bandId = backStackEntry.arguments?.getString("bandId")

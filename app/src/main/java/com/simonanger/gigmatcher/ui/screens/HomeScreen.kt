@@ -54,7 +54,7 @@ fun HomeScreen(gigs: List<Gig>, navController: NavController) {
 fun GigCard(gig: Gig, navController: NavController) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        onClick = { /* Navigate to gig detail */ }
+        onClick = { navController.navigate("gig_bands/${gig.id}") }
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -75,12 +75,21 @@ fun GigCard(gig: Gig, navController: NavController) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            if (gig.matchingBands.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
                 Text(
                     text = "Matching Bands: ${gig.matchingBands.size}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.secondary
+                )
+                Text(
+                    text = "Selected: ${gig.selectedBands.size}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
                 )
             }
         }

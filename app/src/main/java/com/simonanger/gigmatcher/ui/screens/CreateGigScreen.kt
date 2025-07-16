@@ -6,9 +6,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.simonanger.gigmatcher.data.musicGenres
 import com.simonanger.gigmatcher.data.sampleBands
-import com.simonanger.gigmatcher.data.ukCities
 import com.simonanger.gigmatcher.model.Gig
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -20,6 +18,31 @@ fun CreateGigScreen(onGigCreated: (Gig) -> Unit) {
     var promoterName by remember { mutableStateOf("") }
     var genreExpanded by remember { mutableStateOf(false) }
     var cityExpanded by remember { mutableStateOf(false) }
+    
+    // Extract available genres from bands
+    val availableGenres = remember {
+        sampleBands.flatMap { it.genres }.distinct().sorted()
+    }
+    
+    // Extract available cities from bands, filtered by selected genre
+    val availableCities = remember(selectedGenre) {
+        if (selectedGenre.isNotBlank()) {
+            sampleBands
+                .filter { it.genres.contains(selectedGenre) }
+                .flatMap { it.cities }
+                .distinct()
+                .sorted()
+        } else {
+            sampleBands.flatMap { it.cities }.distinct().sorted()
+        }
+    }
+    
+    // Clear selected city if it's not available for the selected genre
+    LaunchedEffect(selectedGenre) {
+        if (selectedGenre.isNotBlank() && selectedCity.isNotBlank() && !availableCities.contains(selectedCity)) {
+            selectedCity = ""
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -66,7 +89,7 @@ fun CreateGigScreen(onGigCreated: (Gig) -> Unit) {
                 expanded = genreExpanded,
                 onDismissRequest = { genreExpanded = false }
             ) {
-                musicGenres.forEach { genre ->
+                availableGenres.forEach { genre ->
                     DropdownMenuItem(
                         text = { Text(genre) },
                         onClick = {
@@ -97,7 +120,7 @@ fun CreateGigScreen(onGigCreated: (Gig) -> Unit) {
                 expanded = cityExpanded,
                 onDismissRequest = { cityExpanded = false }
             ) {
-                ukCities.forEach { city ->
+                availableCities.forEach { city ->
                     DropdownMenuItem(
                         text = { Text(city) },
                         onClick = {

@@ -11,5 +11,6 @@ data class Gig(
     val genre: String,
     val city: String,
     val promoterName: String,
-    val matchingBands: List<Band> = emptyList()
+    val matchingBands: List<Band> = emptyList(),
+    val selectedBands: List<Band> = emptyList()
 ) : Parcelable
