@@ -18,6 +18,7 @@ import com.simonanger.gigmatcher.ui.screens.BandsScreen
 import com.simonanger.gigmatcher.ui.screens.CreateBandScreen
 import com.simonanger.gigmatcher.ui.screens.CreateGigScreen
 import com.simonanger.gigmatcher.ui.screens.GigBandsScreen
+import com.simonanger.gigmatcher.ui.screens.GigsScreen
 import com.simonanger.gigmatcher.ui.screens.HomeScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -39,10 +40,10 @@ fun GigMatcherApp() {
         bottomBar = {
             NavigationBar {
                 NavigationBarItem(
-                    icon = { Icon(Icons.Default.Add, contentDescription = "Create Gig") },
-                    label = { Text("Create Gig") },
+                    icon = { Icon(Icons.Default.Add, contentDescription = "Gigs") },
+                    label = { Text("Gigs") },
                     selected = false,
-                    onClick = { navController.navigate("create_gig") }
+                    onClick = { navController.navigate("gigs") }
                 )
                 NavigationBarItem(
                     icon = { Icon(Icons.Default.Person, contentDescription = "Bands") },
@@ -55,11 +56,11 @@ fun GigMatcherApp() {
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = "home",
+            startDestination = "gigs",
             modifier = Modifier.padding(paddingValues)
         ) {
-            composable("home") {
-                HomeScreen(gigs = gigs, navController = navController)
+            composable("gigs") {
+                GigsScreen(gigs = gigs, navController = navController)
             }
             composable("create_gig") {
                 CreateGigScreen(
@@ -72,6 +73,9 @@ fun GigMatcherApp() {
             }
             composable("bands") {
                 BandsScreen(bands = bands, navController = navController)
+            }
+            composable("home") {
+                HomeScreen(gigs = gigs, navController = navController)
             }
             composable("create_band") {
                 CreateBandScreen(
@@ -87,7 +91,7 @@ fun GigMatcherApp() {
                 gig?.let { currentGig ->
                     GigBandsScreen(
                         gig = currentGig,
-                        onBackClick = { navController.navigate("home") },
+                        onBackClick = { navController.navigate("gigs") },
                         onBandSelected = { band ->
                             // Update the gig with the selected band
                             gigs = gigs.map { g ->
