@@ -9,7 +9,8 @@ val sampleBands = listOf(
         genres = listOf("Rock", "Alternative"),
         cities = listOf("London", "Brighton", "Manchester"),
         bandcampLink = "https://electricwolves.bandcamp.com",
-        bio = "High-energy rock band from London with a passion for alternative sounds."
+        contact = "electricWolves@gmail.com",
+        bio = "High-energy rock band from London with a passion for alternative sounds.",
     ),
     Band(
         id = "2",
@@ -32,6 +33,7 @@ val sampleBands = listOf(
         genres = listOf("Electronic", "Synthwave"),
         cities = listOf("London", "Manchester", "Liverpool"),
         bandcampLink = "https://neonnights.bandcamp.com",
+        contact = "neonnights666@gmail.com",
         bio = "Synthwave collective bringing 80s vibes to modern dancefloors."
     )
 )

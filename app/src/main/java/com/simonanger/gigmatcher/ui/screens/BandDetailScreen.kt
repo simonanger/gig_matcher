@@ -59,6 +59,19 @@ fun BandDetailScreen(band: Band) {
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
+
+                if (band.contact != null) {
+                    Text(
+                        text = "Contact",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = band.contact,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
         }
 

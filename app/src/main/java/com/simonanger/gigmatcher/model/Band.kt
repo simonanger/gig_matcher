@@ -12,5 +12,6 @@ data class Band(
     val cities: List<String>,
     val logo: String? = null,
     val bandcampLink: String? = null,
+    val contact: String? = null,
     val bio: String = ""
 ) : Parcelable
