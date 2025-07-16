@@ -1,7 +1,6 @@
-// ===== app/src/main/java/com/example/gigmatcher/data/SampleData.kt =====
-package com.example.gigmatcher.data
+package com.simonanger.gigmatcher.data
 
-import com.example.gigmatcher.model.Band
+import com.simonanger.gigmatcher.model.Band
 
 val sampleBands = listOf(
     Band(

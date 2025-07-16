@@ -1,5 +1,4 @@
-// ===== app/src/main/java/com/example/gigmatcher/ui/screens/BandDetailScreen.kt =====
-package com.example.gigmatcher.ui.screens
+package com.simonanger.gigmatcher.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -7,7 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.gigmatcher.model.Band
+import com.simonanger.gigmatcher.model.Band
 
 @Composable
 fun BandDetailScreen(band: Band) {

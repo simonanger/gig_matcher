@@ -1,5 +1,5 @@
 // ===== app/src/main/java/com/example/gigmatcher/ui/screens/BandsScreen.kt =====
-package com.example.gigmatcher.ui.screens
+package com.simonanger.gigmatcher.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,7 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.gigmatcher.model.Band
+import com.simonanger.gigmatcher.model.Band
 
 @Composable
 fun BandsScreen(bands: List<Band>, navController: NavController) {

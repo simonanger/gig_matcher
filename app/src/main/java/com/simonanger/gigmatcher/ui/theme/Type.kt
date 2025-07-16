@@ -1,5 +1,5 @@
 // ===== app/src/main/java/com/example/gigmatcher/ui/theme/Type.kt =====
-package com.example.gigmatcher.ui.theme
+package com.simonanger.gigmatcher.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

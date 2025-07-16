@@ -1,7 +1,7 @@
-// ===== app/src/main/java/com/example/gigmatcher/model/Gig.kt =====
-package com.example.gigmatcher.model
+package com.simonanger.gigmatcher.model
 
 import android.os.Parcelable
+import com.simonanger.gigmatcher.model.Band
 import kotlinx.parcelize.Parcelize
 
 @Parcelize

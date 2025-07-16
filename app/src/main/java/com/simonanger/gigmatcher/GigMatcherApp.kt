@@ -1,4 +1,3 @@
-// ===== app/src/main/java/com/simonanger/gigmatcher/GigMatcherApp.kt =====
 package com.simonanger.gigmatcher
 
 import androidx.compose.foundation.layout.padding
