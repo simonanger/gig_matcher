@@ -6,12 +6,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.simonanger.gigmatcher.data.sampleBands
+import com.simonanger.gigmatcher.model.Band
 import com.simonanger.gigmatcher.model.Gig
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateGigScreen(onGigCreated: (Gig) -> Unit) {
+fun CreateGigScreen(bands: List<Band>, onGigCreated: (Gig) -> Unit) {
     var title by remember { mutableStateOf("") }
     var selectedGenre by remember { mutableStateOf("") }
     var selectedCity by remember { mutableStateOf("") }
@@ -20,20 +20,20 @@ fun CreateGigScreen(onGigCreated: (Gig) -> Unit) {
     var cityExpanded by remember { mutableStateOf(false) }
     
     // Extract available genres from bands
-    val availableGenres = remember {
-        sampleBands.flatMap { it.genres }.distinct().sorted()
+    val availableGenres = remember(bands) {
+        bands.flatMap { it.genres }.distinct().sorted()
     }
     
     // Extract available cities from bands, filtered by selected genre
-    val availableCities = remember(selectedGenre) {
+    val availableCities = remember(selectedGenre, bands) {
         if (selectedGenre.isNotBlank()) {
-            sampleBands
+            bands
                 .filter { it.genres.contains(selectedGenre) }
                 .flatMap { it.cities }
                 .distinct()
                 .sorted()
         } else {
-            sampleBands.flatMap { it.cities }.distinct().sorted()
+            bands.flatMap { it.cities }.distinct().sorted()
         }
     }
     
@@ -137,7 +137,7 @@ fun CreateGigScreen(onGigCreated: (Gig) -> Unit) {
                 if (title.isNotBlank() && selectedGenre.isNotBlank() &&
                     selectedCity.isNotBlank() && promoterName.isNotBlank()) {
 
-                    val matchingBands = sampleBands.filter { band ->
+                    val matchingBands = bands.filter { band ->
                         band.genres.contains(selectedGenre) && band.cities.contains(selectedCity)
                     }
 
@@ -161,7 +161,7 @@ fun CreateGigScreen(onGigCreated: (Gig) -> Unit) {
 
         // Preview matching bands
         if (selectedGenre.isNotBlank() && selectedCity.isNotBlank()) {
-            val matchingBands = sampleBands.filter { band ->
+            val matchingBands = bands.filter { band ->
                 band.genres.contains(selectedGenre) && band.cities.contains(selectedCity)
             }
 

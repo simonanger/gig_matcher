@@ -11,9 +11,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.simonanger.gigmatcher.data.sampleBands
+import com.simonanger.gigmatcher.model.Band
 import com.simonanger.gigmatcher.model.Gig
 import com.simonanger.gigmatcher.ui.screens.BandDetailScreen
 import com.simonanger.gigmatcher.ui.screens.BandsScreen
+import com.simonanger.gigmatcher.ui.screens.CreateBandScreen
 import com.simonanger.gigmatcher.ui.screens.CreateGigScreen
 import com.simonanger.gigmatcher.ui.screens.GigBandsScreen
 import com.simonanger.gigmatcher.ui.screens.HomeScreen
@@ -23,6 +25,7 @@ import com.simonanger.gigmatcher.ui.screens.HomeScreen
 fun GigMatcherApp() {
     val navController = rememberNavController()
     var gigs by remember { mutableStateOf(listOf<Gig>()) }
+    var bands by remember { mutableStateOf(sampleBands) }
 
     Scaffold(
         topBar = {
@@ -60,6 +63,7 @@ fun GigMatcherApp() {
             }
             composable("create_gig") {
                 CreateGigScreen(
+                    bands = bands,
                     onGigCreated = { gig ->
                         gigs = gigs + gig
                         navController.navigate("gig_bands/${gig.id}")
@@ -67,7 +71,15 @@ fun GigMatcherApp() {
                 )
             }
             composable("bands") {
-                BandsScreen(bands = sampleBands, navController = navController)
+                BandsScreen(bands = bands, navController = navController)
+            }
+            composable("create_band") {
+                CreateBandScreen(
+                    onBandCreated = { band ->
+                        bands = bands + band
+                        navController.navigate("bands")
+                    }
+                )
             }
             composable("gig_bands/{gigId}") { backStackEntry ->
                 val gigId = backStackEntry.arguments?.getString("gigId")
@@ -96,7 +108,7 @@ fun GigMatcherApp() {
             }
             composable("band_detail/{bandId}") { backStackEntry ->
                 val bandId = backStackEntry.arguments?.getString("bandId")
-                val band = sampleBands.find { it.id == bandId }
+                val band = bands.find { it.id == bandId }
                 band?.let { BandDetailScreen(band = it) }
             }
         }
