@@ -15,16 +15,19 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.simonanger.gigmatcher.data.loadBandsFromCsv
 import com.simonanger.gigmatcher.data.sampleBands
 import com.simonanger.gigmatcher.model.Gig
 import com.simonanger.gigmatcher.ui.screens.BandDetailScreen
@@ -41,6 +44,18 @@ fun GigMatcherApp() {
     val navController = rememberNavController()
     var gigs by remember { mutableStateOf(listOf<Gig>()) }
     var bands by remember { mutableStateOf(sampleBands) }
+    val context = LocalContext.current
+    
+    LaunchedEffect(Unit) {
+        try {
+            val inputStream = context.assets.open("uk_active_bands_standardized.csv")
+            val csvBands = loadBandsFromCsv(inputStream)
+            bands = csvBands
+        } catch (e: Exception) {
+            // Fall back to sample bands if CSV loading fails
+            bands = sampleBands
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -111,6 +126,7 @@ fun GigMatcherApp() {
                 gig?.let { currentGig ->
                     GigBandsScreen(
                         gig = currentGig,
+                        navController = navController,
                         onBackClick = { navController.navigate("gigs") },
                         onBandSelected = { band ->
                             // Update the gig with the selected band
@@ -130,10 +146,17 @@ fun GigMatcherApp() {
                     )
                 }
             }
-            composable("band_detail/{bandId}") { backStackEntry ->
+            composable("band_detail/{bandId}?from={from}&gigId={gigId}") { backStackEntry ->
                 val bandId = backStackEntry.arguments?.getString("bandId")
+                val from = backStackEntry.arguments?.getString("from")
+                val gigId = backStackEntry.arguments?.getString("gigId")
                 val band = bands.find { it.id == bandId }
-                band?.let { BandDetailScreen(band = it) }
+                band?.let { 
+                    val onBackClick = if (from == "gig_bands" && gigId != null) {
+                        { navController.navigate("gig_bands/$gigId") }
+                    } else null
+                    BandDetailScreen(band = it, onBackClick = onBackClick) 
+                }
             }
         }
     }

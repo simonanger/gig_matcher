@@ -21,12 +21,14 @@ import com.simonanger.gigmatcher.model.Band
 fun CreateBandScreen(onBandCreated: (Band) -> Unit) {
     var bandName by remember { mutableStateOf("") }
     var selectedGenres by remember { mutableStateOf(listOf<String>()) }
-    var selectedCities by remember { mutableStateOf(listOf<String>()) }
     var newGenre by remember { mutableStateOf("") }
-    var newCity by remember { mutableStateOf("") }
-    var bandcampLink by remember { mutableStateOf("") }
-    var contact by remember { mutableStateOf("") }
-    var bio by remember { mutableStateOf("") }
+    var location by remember { mutableStateOf("") }
+    var country by remember { mutableStateOf("England") }
+    var url by remember { mutableStateOf("") }
+    var status by remember { mutableStateOf("Active") }
+    var countryExpanded by remember { mutableStateOf(false) }
+    
+    val availableCountries = listOf("England", "Scotland", "Wales", "Northern Ireland", "Ireland")
     
 
     Column(
@@ -107,103 +109,75 @@ fun CreateBandScreen(onBandCreated: (Band) -> Unit) {
             }
         }
 
-        // Cities Section
-        Text(
-            text = "Cities",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Medium
+        OutlinedTextField(
+            value = location,
+            onValueChange = { location = it },
+            label = { Text("Location") },
+            modifier = Modifier.fillMaxWidth()
         )
-        
-        // Selected cities
-        if (selectedCities.isNotEmpty()) {
-            LazyColumn(
-                modifier = Modifier.heightIn(max = 100.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                items(selectedCities) { city ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = city,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        IconButton(
-                            onClick = {
-                                selectedCities = selectedCities - city
-                            }
-                        ) {
-                            Icon(Icons.Default.Delete, contentDescription = "Remove city")
-                        }
-                    }
-                }
-            }
-        }
-        
-        // Add city row
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+
+        // Country Dropdown
+        ExposedDropdownMenuBox(
+            expanded = countryExpanded,
+            onExpandedChange = { countryExpanded = !countryExpanded }
         ) {
             OutlinedTextField(
-                value = newCity,
-                onValueChange = { newCity = it },
-                label = { Text("Add City") },
-                modifier = Modifier.weight(1f)
+                value = country,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Country") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = countryExpanded) },
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth()
             )
-            IconButton(
-                onClick = {
-                    if (newCity.isNotBlank() && !selectedCities.contains(newCity)) {
-                        selectedCities = selectedCities + newCity
-                        newCity = ""
-                    }
-                }
+            ExposedDropdownMenu(
+                expanded = countryExpanded,
+                onDismissRequest = { countryExpanded = false }
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add city")
+                availableCountries.forEach { availableCountry ->
+                    DropdownMenuItem(
+                        text = { Text(availableCountry) },
+                        onClick = {
+                            country = availableCountry
+                            countryExpanded = false
+                        }
+                    )
+                }
             }
         }
 
         OutlinedTextField(
-            value = bandcampLink,
-            onValueChange = { bandcampLink = it },
-            label = { Text("Bandcamp Link (optional)") },
+            value = url,
+            onValueChange = { url = it },
+            label = { Text("Band URL (optional)") },
             modifier = Modifier.fillMaxWidth()
         )
 
         OutlinedTextField(
-            value = contact,
-            onValueChange = { contact = it },
-            label = { Text("Contact (optional)") },
+            value = status,
+            onValueChange = { status = it },
+            label = { Text("Status") },
             modifier = Modifier.fillMaxWidth()
-        )
-
-        OutlinedTextField(
-            value = bio,
-            onValueChange = { bio = it },
-            label = { Text("Bio (optional)") },
-            modifier = Modifier.fillMaxWidth(),
-            minLines = 3
         )
 
         Button(
             onClick = {
-                if (bandName.isNotBlank() && selectedGenres.isNotEmpty() && selectedCities.isNotEmpty()) {
+                if (bandName.isNotBlank() && selectedGenres.isNotEmpty() && location.isNotBlank()) {
                     val band = Band(
                         id = System.currentTimeMillis().toString(),
                         name = bandName,
+                        url = url.ifBlank { "" },
                         genres = selectedGenres,
-                        cities = selectedCities,
-                        bandcampLink = bandcampLink.ifBlank { null },
-                        contact = contact.ifBlank { null },
-                        bio = bio
+                        location = location,
+                        country = country,
+                        status = status
                     )
                     onBandCreated(band)
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            enabled = bandName.isNotBlank() && selectedGenres.isNotEmpty() && selectedCities.isNotEmpty()
+            enabled = bandName.isNotBlank() && selectedGenres.isNotEmpty() && location.isNotBlank()
         ) {
             Text("Create Band")
         }

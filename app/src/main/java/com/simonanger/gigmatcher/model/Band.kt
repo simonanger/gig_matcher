@@ -8,10 +8,9 @@ import kotlinx.parcelize.Parcelize
 data class Band(
     val id: String,
     val name: String,
+    val url: String,
     val genres: List<String>,
-    val cities: List<String>,
-    val logo: String? = null,
-    val bandcampLink: String? = null,
-    val contact: String? = null,
-    val bio: String = ""
+    val location: String,
+    val country: String,
+    val status: String = "Active"
 ) : Parcelable

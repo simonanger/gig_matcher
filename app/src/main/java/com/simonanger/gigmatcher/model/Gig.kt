@@ -8,7 +8,7 @@ import kotlinx.parcelize.Parcelize
 data class Gig(
     val id: String,
     val title: String,
-    val genre: String,
+    val genres: List<String>,
     val city: String,
     val promoterName: String,
     val matchingBands: List<Band> = emptyList(),

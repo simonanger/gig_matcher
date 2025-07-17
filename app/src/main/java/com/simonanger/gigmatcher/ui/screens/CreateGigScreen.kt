@@ -1,8 +1,14 @@
 package com.simonanger.gigmatcher.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -13,33 +19,48 @@ import com.simonanger.gigmatcher.model.Gig
 @Composable
 fun CreateGigScreen(bands: List<Band>, onGigCreated: (Gig) -> Unit) {
     var title by remember { mutableStateOf("") }
-    var selectedGenre by remember { mutableStateOf("") }
+    var selectedGenres by remember { mutableStateOf(listOf<String>()) }
+    var selectedCountry by remember { mutableStateOf("") }
     var selectedCity by remember { mutableStateOf("") }
     var promoterName by remember { mutableStateOf("") }
     var genreExpanded by remember { mutableStateOf(false) }
+    var countryExpanded by remember { mutableStateOf(false) }
     var cityExpanded by remember { mutableStateOf(false) }
     
-    // Extract available genres from bands
+    // Extract available genres from bands (deduplicated)
     val availableGenres = remember(bands) {
         bands.flatMap { it.genres }.distinct().sorted()
     }
     
-    // Extract available cities from bands, filtered by selected genre
-    val availableCities = remember(selectedGenre, bands) {
-        if (selectedGenre.isNotBlank()) {
-            bands
-                .filter { it.genres.contains(selectedGenre) }
-                .flatMap { it.cities }
-                .distinct()
-                .sorted()
-        } else {
-            bands.flatMap { it.cities }.distinct().sorted()
-        }
+    // Extract available countries from bands (excluding Unknown)
+    val availableCountries = remember(bands) {
+        bands.map { it.country }.distinct().filter { it != "Unknown" }.sorted()
     }
     
-    // Clear selected city if it's not available for the selected genre
-    LaunchedEffect(selectedGenre) {
-        if (selectedGenre.isNotBlank() && selectedCity.isNotBlank() && !availableCities.contains(selectedCity)) {
+    // Extract available cities from bands, filtered by selected genres and country
+    val availableCities = remember(selectedGenres, selectedCountry, bands) {
+        val filteredBands = bands.filter { band ->
+            val genreMatch = if (selectedGenres.isNotEmpty()) {
+                selectedGenres.any { genre -> band.genres.contains(genre) }
+            } else true
+            
+            val countryMatch = if (selectedCountry.isNotBlank()) {
+                band.country == selectedCountry
+            } else true
+            
+            genreMatch && countryMatch
+        }
+        
+        // Extract just the city name (first part before comma) and remove duplicates
+        filteredBands.map { band ->
+            val cityName = band.location.split(",").firstOrNull()?.trim() ?: band.location
+            cityName
+        }.distinct().filter { it.isNotBlank() }.sorted()
+    }
+    
+    // Clear selected city if it's not available for the selected genres or country
+    LaunchedEffect(selectedGenres, selectedCountry) {
+        if (selectedCity.isNotBlank() && !availableCities.contains(selectedCity)) {
             selectedCity = ""
         }
     }
@@ -70,16 +91,51 @@ fun CreateGigScreen(bands: List<Band>, onGigCreated: (Gig) -> Unit) {
             modifier = Modifier.fillMaxWidth()
         )
 
-        // Genre Dropdown
+        // Genres Section
+        Text(
+            text = "Genres",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Medium
+        )
+        
+        // Selected genres
+        if (selectedGenres.isNotEmpty()) {
+            LazyColumn(
+                modifier = Modifier.heightIn(max = 100.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                items(selectedGenres) { genre ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = genre,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        IconButton(
+                            onClick = {
+                                selectedGenres = selectedGenres - genre
+                            }
+                        ) {
+                            Icon(Icons.Default.Delete, contentDescription = "Remove genre")
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Genre Dropdown for adding new genres
         ExposedDropdownMenuBox(
             expanded = genreExpanded,
             onExpandedChange = { genreExpanded = !genreExpanded }
         ) {
             OutlinedTextField(
-                value = selectedGenre,
+                value = "",
                 onValueChange = {},
                 readOnly = true,
-                label = { Text("Genre") },
+                label = { Text("Add Genre") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = genreExpanded) },
                 modifier = Modifier
                     .menuAnchor()
@@ -89,12 +145,43 @@ fun CreateGigScreen(bands: List<Band>, onGigCreated: (Gig) -> Unit) {
                 expanded = genreExpanded,
                 onDismissRequest = { genreExpanded = false }
             ) {
-                availableGenres.forEach { genre ->
+                availableGenres.filter { !selectedGenres.contains(it) }.forEach { genre ->
                     DropdownMenuItem(
                         text = { Text(genre) },
                         onClick = {
-                            selectedGenre = genre
+                            selectedGenres = selectedGenres + genre
                             genreExpanded = false
+                        }
+                    )
+                }
+            }
+        }
+
+        // Country Dropdown
+        ExposedDropdownMenuBox(
+            expanded = countryExpanded,
+            onExpandedChange = { countryExpanded = !countryExpanded }
+        ) {
+            OutlinedTextField(
+                value = selectedCountry,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Country") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = countryExpanded) },
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth()
+            )
+            ExposedDropdownMenu(
+                expanded = countryExpanded,
+                onDismissRequest = { countryExpanded = false }
+            ) {
+                availableCountries.forEach { country ->
+                    DropdownMenuItem(
+                        text = { Text(country) },
+                        onClick = {
+                            selectedCountry = country
+                            countryExpanded = false
                         }
                     )
                 }
@@ -134,17 +221,20 @@ fun CreateGigScreen(bands: List<Band>, onGigCreated: (Gig) -> Unit) {
 
         Button(
             onClick = {
-                if (title.isNotBlank() && selectedGenre.isNotBlank() &&
-                    selectedCity.isNotBlank() && promoterName.isNotBlank()) {
+                if (title.isNotBlank() && selectedGenres.isNotEmpty() &&
+                    selectedCountry.isNotBlank() && selectedCity.isNotBlank() && promoterName.isNotBlank()) {
 
                     val matchingBands = bands.filter { band ->
-                        band.genres.contains(selectedGenre) && band.cities.contains(selectedCity)
+                        val bandCityName = band.location.split(",").firstOrNull()?.trim() ?: band.location
+                        selectedGenres.any { genre -> band.genres.contains(genre) } && 
+                        bandCityName == selectedCity && 
+                        band.country == selectedCountry
                     }
 
                     val gig = Gig(
                         id = System.currentTimeMillis().toString(),
                         title = title,
-                        genre = selectedGenre,
+                        genres = selectedGenres,
                         city = selectedCity,
                         promoterName = promoterName,
                         matchingBands = matchingBands
@@ -153,16 +243,19 @@ fun CreateGigScreen(bands: List<Band>, onGigCreated: (Gig) -> Unit) {
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            enabled = title.isNotBlank() && selectedGenre.isNotBlank() &&
-                    selectedCity.isNotBlank() && promoterName.isNotBlank()
+            enabled = title.isNotBlank() && selectedGenres.isNotEmpty() &&
+                    selectedCountry.isNotBlank() && selectedCity.isNotBlank() && promoterName.isNotBlank()
         ) {
             Text("Create Gig & Find Bands")
         }
 
         // Preview matching bands
-        if (selectedGenre.isNotBlank() && selectedCity.isNotBlank()) {
+        if (selectedGenres.isNotEmpty() && selectedCountry.isNotBlank() && selectedCity.isNotBlank()) {
             val matchingBands = bands.filter { band ->
-                band.genres.contains(selectedGenre) && band.cities.contains(selectedCity)
+                val bandCityName = band.location.split(",").firstOrNull()?.trim() ?: band.location
+                selectedGenres.any { genre -> band.genres.contains(genre) } && 
+                bandCityName == selectedCity && 
+                band.country == selectedCountry
             }
 
             if (matchingBands.isNotEmpty()) {

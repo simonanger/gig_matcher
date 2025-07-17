@@ -25,7 +25,7 @@ fun GigCard(gig: Gig, navController: NavController) {
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "${gig.genre} • ${gig.city}",
+                text = "${gig.genres.joinToString(", ")} • ${gig.city}",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.primary
             )

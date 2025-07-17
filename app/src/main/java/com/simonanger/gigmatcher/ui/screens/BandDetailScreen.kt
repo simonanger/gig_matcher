@@ -1,6 +1,8 @@
 package com.simonanger.gigmatcher.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -8,14 +10,36 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.simonanger.gigmatcher.model.Band
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BandDetailScreen(band: Band) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
+fun BandDetailScreen(
+    band: Band,
+    onBackClick: (() -> Unit)? = null
+) {
+    Scaffold(
+        topBar = {
+            if (onBackClick != null) {
+                TopAppBar(
+                    title = { Text("Band Details") },
+                    navigationIcon = {
+                        IconButton(onClick = onBackClick) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                )
+            }
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
         Text(
             text = band.name,
             style = MaterialTheme.typography.headlineLarge,
@@ -38,60 +62,49 @@ fun BandDetailScreen(band: Band) {
                 )
 
                 Text(
-                    text = "Available Cities",
+                    text = "Location",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = band.cities.joinToString(", "),
+                    text = band.location,
                     style = MaterialTheme.typography.bodyMedium
                 )
 
-                if (band.bandcampLink != null) {
-                    Text(
-                        text = "Bandcamp",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = band.bandcampLink,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
+                Text(
+                    text = "Country",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = band.country,
+                    style = MaterialTheme.typography.bodyMedium
+                )
 
-                if (band.contact != null) {
+                Text(
+                    text = "Status",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = band.status,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+                if (band.url.isNotBlank()) {
                     Text(
-                        text = "Contact",
+                        text = "Band Profile",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = band.contact,
+                        text = band.url,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
             }
         }
-
-        if (band.bio.isNotBlank()) {
-            Card {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        text = "About",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    Text(
-                        text = band.bio,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-            }
         }
     }
 }

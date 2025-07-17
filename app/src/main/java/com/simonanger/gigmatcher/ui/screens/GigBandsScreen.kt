@@ -1,11 +1,13 @@
 package com.simonanger.gigmatcher.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.simonanger.gigmatcher.model.Band
 import com.simonanger.gigmatcher.model.Gig
 
@@ -20,6 +23,7 @@ import com.simonanger.gigmatcher.model.Gig
 @Composable
 fun GigBandsScreen(
     gig: Gig,
+    navController: NavController,
     onBackClick: () -> Unit,
     onBandSelected: (Band) -> Unit
 ) {
@@ -64,7 +68,7 @@ fun GigBandsScreen(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "${gig.genre} • ${gig.city}",
+                        text = "${gig.genres.joinToString(", ")} • ${gig.city}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -76,15 +80,45 @@ fun GigBandsScreen(
                 }
             }
 
+            // Selected bands section
+            if (selectedBands.isNotEmpty()) {
+                Text(
+                    text = "Selected Band${if (selectedBands.size == 1) "" else "s"} (${selectedBands.size})",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                LazyColumn(
+                    modifier = Modifier.heightIn(max = 200.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(selectedBands.toList()) { band ->
+                        SelectedBandCard(
+                            band = band,
+                            gig = gig,
+                            navController = navController,
+                            onRemoveClick = {
+                                selectedBands = selectedBands - band
+                                onBandSelected(band)
+                            }
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
             // Matching bands section
+            val availableBands = gig.matchingBands.filter { !selectedBands.contains(it) }
             Text(
-                text = "Matching Bands (${gig.matchingBands.size})",
+                text = "Matching Bands (${availableBands.size})",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
-            if (gig.matchingBands.isEmpty()) {
+            if (availableBands.isEmpty()) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
@@ -98,7 +132,11 @@ fun GigBandsScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "No matching bands found for this genre and city combination",
+                            text = if (gig.matchingBands.isEmpty()) {
+                                "No matching bands found for this genre and city combination"
+                            } else {
+                                "All matching bands have been selected"
+                            },
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onErrorContainer
                         )
@@ -108,10 +146,12 @@ fun GigBandsScreen(
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(gig.matchingBands) { band ->
+                    items(availableBands) { band ->
                         BandCard(
                             band = band,
+                            gig = gig,
                             isSelected = selectedBands.contains(band),
+                            navController = navController,
                             onBandClick = { 
                                 selectedBands = if (selectedBands.contains(band)) {
                                     selectedBands - band
@@ -131,7 +171,9 @@ fun GigBandsScreen(
 @Composable
 fun BandCard(
     band: Band,
+    gig: Gig,
     isSelected: Boolean,
+    navController: NavController,
     onBandClick: () -> Unit
 ) {
     Card(
@@ -152,7 +194,10 @@ fun BandCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { navController.navigate("band_detail/${band.id}?from=gig_bands&gigId=${gig.id}") }
+                    .padding(8.dp)
             ) {
                 Text(
                     text = band.name,
@@ -165,20 +210,16 @@ fun BandCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = band.cities.joinToString(", "),
+                    text = band.location,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                if (band.bio.isNotBlank()) {
-                    Text(
-                        text = band.bio,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-                }
+                Text(
+                    text = band.country,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Medium
+                )
             }
             
             Button(
@@ -196,6 +237,71 @@ fun BandCard(
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(if (isSelected) "Remove" else "Add")
+            }
+        }
+    }
+}
+
+@Composable
+fun SelectedBandCard(
+    band: Band,
+    gig: Gig,
+    navController: NavController,
+    onRemoveClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { navController.navigate("band_detail/${band.id}?from=gig_bands&gigId=${gig.id}") }
+                    .padding(8.dp)
+            ) {
+                Text(
+                    text = band.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = band.genres.joinToString(", "),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    text = band.location,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    text = band.country,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            
+            IconButton(
+                onClick = onRemoveClick,
+                colors = IconButtonDefaults.iconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                )
+            ) {
+                Icon(
+                    Icons.Default.Close,
+                    contentDescription = "Remove from gig"
+                )
             }
         }
     }
