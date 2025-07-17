@@ -83,6 +83,9 @@ fun GigBandsScreen(
                 }
             }
 
+            // Calculate available bands once for the entire component
+            val availableBands = gig.matchingBands.filter { !selectedBands.contains(it) }
+
             // Selected bands section
             if (selectedBands.isNotEmpty()) {
                 Text(
@@ -93,7 +96,11 @@ fun GigBandsScreen(
                 )
 
                 LazyColumn(
-                    modifier = Modifier.heightIn(max = 200.dp),
+                    modifier = if (availableBands.isEmpty() && !showMatchingBands) {
+                        Modifier.fillMaxHeight()
+                    } else {
+                        Modifier.heightIn(max = 200.dp)
+                    },
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(selectedBands.toList()) { band ->
@@ -113,7 +120,6 @@ fun GigBandsScreen(
             }
 
             // Show button to view more matching bands if there are available bands and they're not currently shown
-            val availableBands = gig.matchingBands.filter { !selectedBands.contains(it) }
             if (availableBands.isNotEmpty() && !showMatchingBands) {
                 Button(
                     onClick = { showMatchingBands = true },

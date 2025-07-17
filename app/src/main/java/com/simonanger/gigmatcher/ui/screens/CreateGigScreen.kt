@@ -32,9 +32,22 @@ fun CreateGigScreen(bands: List<Band>, onGigCreated: (Gig) -> Unit) {
     var countryExpanded by remember { mutableStateOf(false) }
     var cityExpanded by remember { mutableStateOf(false) }
     
-    // Extract available genres from bands (deduplicated)
-    val availableGenres = remember(bands) {
-        bands.flatMap { it.genres }.distinct().sorted()
+    // Extract available genres from bands based on selected location (deduplicated)
+    val availableGenres = remember(bands, selectedCountry, selectedCity) {
+        val filteredBands = bands.filter { band ->
+            val countryMatch = if (selectedCountry.isNotBlank()) {
+                band.country == selectedCountry
+            } else true
+            
+            val cityMatch = if (selectedCity.isNotBlank()) {
+                val bandCityName = band.location.split(",").firstOrNull()?.trim() ?: band.location
+                bandCityName == selectedCity
+            } else true
+            
+            countryMatch && cityMatch
+        }
+        
+        filteredBands.flatMap { it.genres }.distinct().sorted()
     }
     
     // Get genre categories
@@ -110,12 +123,104 @@ fun CreateGigScreen(bands: List<Band>, onGigCreated: (Gig) -> Unit) {
             modifier = Modifier.fillMaxWidth()
         )
 
+        // Location Section
+        Text(
+            text = "Location",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Medium
+        )
+
+        // Country Dropdown
+        ExposedDropdownMenuBox(
+            expanded = countryExpanded,
+            onExpandedChange = { countryExpanded = !countryExpanded }
+        ) {
+            OutlinedTextField(
+                value = selectedCountry,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Country") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = countryExpanded) },
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth()
+            )
+            ExposedDropdownMenu(
+                expanded = countryExpanded,
+                onDismissRequest = { countryExpanded = false }
+            ) {
+                availableCountries.forEach { country ->
+                    DropdownMenuItem(
+                        text = { Text(country) },
+                        onClick = {
+                            selectedCountry = country
+                            countryExpanded = false
+                        }
+                    )
+                }
+            }
+        }
+
+        // City Dropdown
+        ExposedDropdownMenuBox(
+            expanded = cityExpanded,
+            onExpandedChange = { cityExpanded = !cityExpanded }
+        ) {
+            OutlinedTextField(
+                value = selectedCity,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("City") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = cityExpanded) },
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth()
+            )
+            ExposedDropdownMenu(
+                expanded = cityExpanded,
+                onDismissRequest = { cityExpanded = false }
+            ) {
+                availableCities.forEach { city ->
+                    DropdownMenuItem(
+                        text = { Text(city) },
+                        onClick = {
+                            selectedCity = city
+                            cityExpanded = false
+                        }
+                    )
+                }
+            }
+        }
+
         // Genres Section
         Text(
             text = "Genres",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Medium
         )
+        
+        // Show location-based genre filtering info
+        if (selectedCountry.isNotBlank() || selectedCity.isNotBlank()) {
+            val locationText = when {
+                selectedCountry.isNotBlank() && selectedCity.isNotBlank() -> "$selectedCity, $selectedCountry"
+                selectedCountry.isNotBlank() -> selectedCountry
+                selectedCity.isNotBlank() -> selectedCity
+                else -> ""
+            }
+            Text(
+                text = "Showing genres available in $locationText (${availableGenres.size} genres)",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+        } else {
+            Text(
+                text = "Select location above to filter genres by available bands",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+        }
         
         // Selected genres
         if (selectedGenres.isNotEmpty()) {
@@ -214,68 +319,6 @@ fun CreateGigScreen(bands: List<Band>, onGigCreated: (Gig) -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(8.dp)
             )
-        }
-
-        // Country Dropdown
-        ExposedDropdownMenuBox(
-            expanded = countryExpanded,
-            onExpandedChange = { countryExpanded = !countryExpanded }
-        ) {
-            OutlinedTextField(
-                value = selectedCountry,
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Country") },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = countryExpanded) },
-                modifier = Modifier
-                    .menuAnchor()
-                    .fillMaxWidth()
-            )
-            ExposedDropdownMenu(
-                expanded = countryExpanded,
-                onDismissRequest = { countryExpanded = false }
-            ) {
-                availableCountries.forEach { country ->
-                    DropdownMenuItem(
-                        text = { Text(country) },
-                        onClick = {
-                            selectedCountry = country
-                            countryExpanded = false
-                        }
-                    )
-                }
-            }
-        }
-
-        // City Dropdown
-        ExposedDropdownMenuBox(
-            expanded = cityExpanded,
-            onExpandedChange = { cityExpanded = !cityExpanded }
-        ) {
-            OutlinedTextField(
-                value = selectedCity,
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("City") },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = cityExpanded) },
-                modifier = Modifier
-                    .menuAnchor()
-                    .fillMaxWidth()
-            )
-            ExposedDropdownMenu(
-                expanded = cityExpanded,
-                onDismissRequest = { cityExpanded = false }
-            ) {
-                availableCities.forEach { city ->
-                    DropdownMenuItem(
-                        text = { Text(city) },
-                        onClick = {
-                            selectedCity = city
-                            cityExpanded = false
-                        }
-                    )
-                }
-            }
         }
 
         Button(
