@@ -111,10 +111,10 @@ fun GigBandsScreen(
                 )
 
                 LazyColumn(
-                    modifier = if (availableBands.isEmpty() || !showMatchingBands) {
-                        Modifier.fillMaxHeight()
+                    modifier = if (showMatchingBands && availableBands.isNotEmpty()) {
+                        Modifier.weight(0.4f)
                     } else {
-                        Modifier.heightIn(max = 200.dp)
+                        Modifier.weight(1f)
                     },
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -130,27 +130,10 @@ fun GigBandsScreen(
                         )
                     }
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-
-            // Show button to view more matching bands if there are available bands and they're not currently shown
-            if (availableBands.isNotEmpty() && !showMatchingBands) {
-                Button(
-                    onClick = { showMatchingBands = true },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.secondary
-                    )
-                ) {
-                    Icon(
-                        Icons.Default.Search,
-                        contentDescription = "Find more bands"
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Find More Bands (${availableBands.size} available)")
+                
+                if (showMatchingBands && availableBands.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
-                Spacer(modifier = Modifier.height(16.dp))
             }
 
             // Matching bands section - only show when toggled on
@@ -200,6 +183,11 @@ fun GigBandsScreen(
                     }
                 } else {
                     LazyColumn(
+                        modifier = if (selectedBands.isNotEmpty()) {
+                            Modifier.weight(0.6f)
+                        } else {
+                            Modifier.weight(1f)
+                        },
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(availableBands) { band ->
@@ -219,6 +207,25 @@ fun GigBandsScreen(
                             )
                         }
                     }
+                }
+            }
+
+            // Show button to view more matching bands if there are available bands and they're not currently shown
+            if (availableBands.isNotEmpty() && !showMatchingBands) {
+                Spacer(modifier = Modifier.weight(1f))
+                Button(
+                    onClick = { showMatchingBands = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.secondary
+                    )
+                ) {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = "Find more bands"
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Find More Bands (${availableBands.size} available)")
                 }
             }
         }
