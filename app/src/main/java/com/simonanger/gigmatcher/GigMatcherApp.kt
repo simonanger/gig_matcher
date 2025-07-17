@@ -81,7 +81,13 @@ fun GigMatcherApp() {
                     onClick = { navController.navigate("gigs") }
                 )
                 NavigationBarItem(
-                    icon = { Icon(Icons.Default.Person, contentDescription = "Bands") },
+                    icon = {
+                        Image(
+                            painter = painterResource(id = R.drawable.bandicon),
+                            contentDescription = "Bands",
+                            modifier = Modifier.size(29.dp)
+                        )
+                    },
                     label = { Text("Bands") },
                     selected = false,
                     onClick = { navController.navigate("bands") }
