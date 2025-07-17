@@ -3,6 +3,8 @@ package com.simonanger.gigmatcher.ui.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -14,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.simonanger.gigmatcher.model.Band
 import com.simonanger.gigmatcher.model.Gig
+import com.simonanger.gigmatcher.data.GenreCategories
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,12 +27,27 @@ fun CreateGigScreen(bands: List<Band>, onGigCreated: (Gig) -> Unit) {
     var selectedCity by remember { mutableStateOf("") }
     var promoterName by remember { mutableStateOf("") }
     var genreExpanded by remember { mutableStateOf(false) }
+    var selectedGenreCategory by remember { mutableStateOf("") }
+    var categoryExpanded by remember { mutableStateOf(false) }
     var countryExpanded by remember { mutableStateOf(false) }
     var cityExpanded by remember { mutableStateOf(false) }
     
     // Extract available genres from bands (deduplicated)
     val availableGenres = remember(bands) {
         bands.flatMap { it.genres }.distinct().sorted()
+    }
+    
+    // Get genre categories
+    val genreCategories = remember { GenreCategories.getCategoryNames() }
+    
+    // Get genres for selected category
+    val categoryGenres = remember(selectedGenreCategory, availableGenres) {
+        if (selectedGenreCategory.isNotBlank()) {
+            GenreCategories.getGenresForCategory(availableGenres, selectedGenreCategory)
+                .filter { !selectedGenres.contains(it) }
+        } else {
+            emptyList()
+        }
     }
     
     // Extract available countries from bands (excluding Unknown)
@@ -68,6 +86,7 @@ fun CreateGigScreen(bands: List<Band>, onGigCreated: (Gig) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -126,35 +145,75 @@ fun CreateGigScreen(bands: List<Band>, onGigCreated: (Gig) -> Unit) {
             }
         }
         
-        // Genre Dropdown for adding new genres
+        // Genre Category Selection
         ExposedDropdownMenuBox(
-            expanded = genreExpanded,
-            onExpandedChange = { genreExpanded = !genreExpanded }
+            expanded = categoryExpanded,
+            onExpandedChange = { categoryExpanded = !categoryExpanded }
         ) {
             OutlinedTextField(
-                value = "",
+                value = selectedGenreCategory,
                 onValueChange = {},
                 readOnly = true,
-                label = { Text("Add Genre") },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = genreExpanded) },
+                label = { Text("Select Genre Category") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
                 modifier = Modifier
                     .menuAnchor()
                     .fillMaxWidth()
             )
             ExposedDropdownMenu(
-                expanded = genreExpanded,
-                onDismissRequest = { genreExpanded = false }
+                expanded = categoryExpanded,
+                onDismissRequest = { categoryExpanded = false }
             ) {
-                availableGenres.filter { !selectedGenres.contains(it) }.forEach { genre ->
+                genreCategories.forEach { category ->
                     DropdownMenuItem(
-                        text = { Text(genre) },
+                        text = { Text(category) },
                         onClick = {
-                            selectedGenres = selectedGenres + genre
-                            genreExpanded = false
+                            selectedGenreCategory = category
+                            categoryExpanded = false
                         }
                     )
                 }
             }
+        }
+        
+        // Genre Selection (only shown when category is selected)
+        if (selectedGenreCategory.isNotBlank() && categoryGenres.isNotEmpty()) {
+            ExposedDropdownMenuBox(
+                expanded = genreExpanded,
+                onExpandedChange = { genreExpanded = !genreExpanded }
+            ) {
+                OutlinedTextField(
+                    value = "",
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Add Genre from $selectedGenreCategory") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = genreExpanded) },
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                    expanded = genreExpanded,
+                    onDismissRequest = { genreExpanded = false }
+                ) {
+                    categoryGenres.forEach { genre ->
+                        DropdownMenuItem(
+                            text = { Text(genre) },
+                            onClick = {
+                                selectedGenres = selectedGenres + genre
+                                genreExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+        } else if (selectedGenreCategory.isNotBlank() && categoryGenres.isEmpty()) {
+            Text(
+                text = "No more genres available in $selectedGenreCategory category",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(8.dp)
+            )
         }
 
         // Country Dropdown

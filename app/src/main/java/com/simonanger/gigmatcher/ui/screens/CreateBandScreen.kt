@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.simonanger.gigmatcher.model.Band
+import com.simonanger.gigmatcher.data.GenreCategories
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -22,6 +23,8 @@ fun CreateBandScreen(onBandCreated: (Band) -> Unit) {
     var bandName by remember { mutableStateOf("") }
     var selectedGenres by remember { mutableStateOf(listOf<String>()) }
     var newGenre by remember { mutableStateOf("") }
+    var selectedGenreCategory by remember { mutableStateOf("") }
+    var categoryExpanded by remember { mutableStateOf(false) }
     var location by remember { mutableStateOf("") }
     var country by remember { mutableStateOf("England") }
     var url by remember { mutableStateOf("") }
@@ -29,6 +32,17 @@ fun CreateBandScreen(onBandCreated: (Band) -> Unit) {
     var countryExpanded by remember { mutableStateOf(false) }
     
     val availableCountries = listOf("England", "Scotland", "Wales", "Northern Ireland", "Ireland")
+    
+    // Get genre categories and common genres for the selected category
+    val genreCategories = remember { GenreCategories.getCategoryNames() }
+    val categoryGenres = remember(selectedGenreCategory) {
+        if (selectedGenreCategory.isNotBlank()) {
+            val category = GenreCategories.categories.find { it.name == selectedGenreCategory }
+            category?.keywords?.filter { !selectedGenres.contains(it) } ?: emptyList()
+        } else {
+            emptyList()
+        }
+    }
     
 
     Column(
@@ -86,7 +100,78 @@ fun CreateBandScreen(onBandCreated: (Band) -> Unit) {
             }
         }
         
-        // Add genre row
+        // Genre Category Selection
+        ExposedDropdownMenuBox(
+            expanded = categoryExpanded,
+            onExpandedChange = { categoryExpanded = !categoryExpanded }
+        ) {
+            OutlinedTextField(
+                value = selectedGenreCategory,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Select Genre Category") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth()
+            )
+            ExposedDropdownMenu(
+                expanded = categoryExpanded,
+                onDismissRequest = { categoryExpanded = false }
+            ) {
+                genreCategories.forEach { category ->
+                    DropdownMenuItem(
+                        text = { Text(category) },
+                        onClick = {
+                            selectedGenreCategory = category
+                            categoryExpanded = false
+                        }
+                    )
+                }
+            }
+        }
+        
+        // Quick genre selection from category
+        if (selectedGenreCategory.isNotBlank() && categoryGenres.isNotEmpty()) {
+            Text(
+                text = "Common $selectedGenreCategory genres:",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(vertical = 4.dp)
+            )
+            
+            // Show genre buttons in a flow layout
+            categoryGenres.take(6).chunked(2).forEach { genreRow ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    genreRow.forEach { genre ->
+                        Button(
+                            onClick = {
+                                selectedGenres = selectedGenres + genre
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer
+                            )
+                        ) {
+                            Text(
+                                text = genre,
+                                style = MaterialTheme.typography.bodySmall,
+                                maxLines = 1
+                            )
+                        }
+                    }
+                    // Fill remaining space if odd number of genres
+                    if (genreRow.size == 1) {
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
+                }
+            }
+        }
+        
+        // Manual genre input (fallback)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -94,7 +179,7 @@ fun CreateBandScreen(onBandCreated: (Band) -> Unit) {
             OutlinedTextField(
                 value = newGenre,
                 onValueChange = { newGenre = it },
-                label = { Text("Add Genre") },
+                label = { Text("Custom Genre") },
                 modifier = Modifier.weight(1f)
             )
             IconButton(
@@ -105,7 +190,7 @@ fun CreateBandScreen(onBandCreated: (Band) -> Unit) {
                     }
                 }
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add genre")
+                Icon(Icons.Default.Add, contentDescription = "Add custom genre")
             }
         }
 
