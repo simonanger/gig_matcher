@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,6 +29,8 @@ fun GigBandsScreen(
     onBandSelected: (Band) -> Unit
 ) {
     var selectedBands by remember { mutableStateOf(gig.selectedBands.toSet()) }
+    // Show matching bands by default if no bands are selected yet
+    var showMatchingBands by remember { mutableStateOf(gig.selectedBands.isEmpty()) }
 
     Scaffold(
         topBar = {
@@ -109,58 +112,91 @@ fun GigBandsScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            // Matching bands section
+            // Show button to view more matching bands if there are available bands and they're not currently shown
             val availableBands = gig.matchingBands.filter { !selectedBands.contains(it) }
-            Text(
-                text = "Matching Bands (${availableBands.size})",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-
-            if (availableBands.isEmpty()) {
-                Card(
+            if (availableBands.isNotEmpty() && !showMatchingBands) {
+                Button(
+                    onClick = { showMatchingBands = true },
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.secondary
                     )
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(32.dp),
-                        contentAlignment = Alignment.Center
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = "Find more bands"
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Find More Bands (${availableBands.size} available)")
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            // Matching bands section - only show when toggled on
+            if (showMatchingBands) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Matching Bands (${availableBands.size})",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    TextButton(
+                        onClick = { showMatchingBands = false }
                     ) {
-                        Text(
-                            text = if (gig.matchingBands.isEmpty()) {
-                                "No matching bands found for this genre and city combination"
-                            } else {
-                                "All matching bands have been selected"
-                            },
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onErrorContainer
-                        )
+                        Text("Hide")
                     }
                 }
-            } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(availableBands) { band ->
-                        BandCard(
-                            band = band,
-                            gig = gig,
-                            isSelected = selectedBands.contains(band),
-                            navController = navController,
-                            onBandClick = { 
-                                selectedBands = if (selectedBands.contains(band)) {
-                                    selectedBands - band
-                                } else {
-                                    selectedBands + band
-                                }
-                                onBandSelected(band)
-                            }
+
+                if (availableBands.isEmpty()) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer
                         )
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = if (gig.matchingBands.isEmpty()) {
+                                    "No matching bands found for this genre and city combination"
+                                } else {
+                                    "All matching bands have been selected"
+                                },
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        }
+                    }
+                } else {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(availableBands) { band ->
+                            BandCard(
+                                band = band,
+                                gig = gig,
+                                isSelected = selectedBands.contains(band),
+                                navController = navController,
+                                onBandClick = { 
+                                    selectedBands = if (selectedBands.contains(band)) {
+                                        selectedBands - band
+                                    } else {
+                                        selectedBands + band
+                                    }
+                                    onBandSelected(band)
+                                }
+                            )
+                        }
                     }
                 }
             }
