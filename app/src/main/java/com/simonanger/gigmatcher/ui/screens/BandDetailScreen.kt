@@ -112,6 +112,8 @@ fun BandDetailScreen(
                             .fillMaxWidth()
                             .clickable {
                                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(band.url))
+                                intent.putExtra("Mobile", true)
+                                intent.putExtra("User-Agent", "Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36")
                                 context.startActivity(intent)
                             }
                             .padding(vertical = 4.dp),
