@@ -134,9 +134,18 @@ fun GigMatcherApp() {
                             gigs = gigs.map { g ->
                                 if (g.id == currentGig.id) updatedGig else g
                             }
-                            navController.navigate("gigs")
+                            // Navigate back to band selection after editing
+                            navController.navigate("gig_bands/${updatedGig.id}")
                         },
-                        onBackClick = { navController.navigate("gigs") }
+                        onBackClick = { 
+                            // Check if we came from band selection
+                            val previousRoute = navController.previousBackStackEntry?.destination?.route
+                            if (previousRoute?.startsWith("gig_bands/") == true) {
+                                navController.popBackStack()
+                            } else {
+                                navController.navigate("gigs")
+                            }
+                        }
                     )
                 }
             }
@@ -176,6 +185,9 @@ fun GigMatcherApp() {
                                     g
                                 }
                             }
+                        },
+                        onEditGig = { gig ->
+                            navController.navigate("edit_gig/${gig.id}")
                         }
                     )
                 }

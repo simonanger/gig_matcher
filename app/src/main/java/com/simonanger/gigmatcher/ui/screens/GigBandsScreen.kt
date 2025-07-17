@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,7 +27,8 @@ fun GigBandsScreen(
     gig: Gig,
     navController: NavController,
     onBackClick: () -> Unit,
-    onBandSelected: (Band) -> Unit
+    onBandSelected: (Band) -> Unit,
+    onEditGig: ((Gig) -> Unit)? = null
 ) {
     var selectedBands by remember { mutableStateOf(gig.selectedBands.toSet()) }
     // Show matching bands by default if no bands are selected yet
@@ -39,6 +41,19 @@ fun GigBandsScreen(
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    if (onEditGig != null) {
+                        IconButton(
+                            onClick = { onEditGig(gig) }
+                        ) {
+                            Icon(
+                                Icons.Default.Edit,
+                                contentDescription = "Edit gig",
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

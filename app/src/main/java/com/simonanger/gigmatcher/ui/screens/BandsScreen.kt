@@ -3,7 +3,9 @@ package com.simonanger.gigmatcher.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
@@ -11,12 +13,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import kotlinx.coroutines.launch
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.simonanger.gigmatcher.R
 import com.simonanger.gigmatcher.model.Band
+import com.simonanger.gigmatcher.ui.components.AlphabeticalIndex
 import com.simonanger.gigmatcher.ui.components.BandFilterDialog
 import com.simonanger.gigmatcher.ui.components.BandFilters
 import com.simonanger.gigmatcher.ui.components.applyBandFilters
@@ -28,15 +32,40 @@ fun BandsScreen(bands: List<Band>, navController: NavController) {
     var activeFilters by remember { mutableStateOf(BandFilters()) }
     
     val filteredBands = remember(bands, activeFilters) {
-        applyBandFilters(bands, activeFilters)
+        applyBandFilters(bands, activeFilters).sortedBy { it.name.uppercase() }
     }
     
+    // Group bands by first letter and create letter-to-index mapping
+    val groupedBands = remember(filteredBands) {
+        filteredBands.groupBy { it.name.first().uppercase() }
+    }
+    
+    val letterToIndex = remember(groupedBands) {
+        val map = mutableMapOf<String, Int>()
+        var currentIndex = 0
+        groupedBands.keys.sorted().forEach { letter ->
+            map[letter] = currentIndex
+            currentIndex += groupedBands[letter]?.size ?: 0
+        }
+        map
+    }
+    
+    val availableLetters = remember(groupedBands) {
+        groupedBands.keys.sorted()
+    }
+    
+    val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+    
     Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
+        Row(
+            modifier = Modifier.fillMaxSize()
         ) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(16.dp)
+            ) {
             // Header with filter button
             Row(
                 modifier = Modifier
@@ -106,12 +135,33 @@ fun BandsScreen(bands: List<Band>, navController: NavController) {
             )
 
             LazyColumn(
+                state = listState,
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(filteredBands) { band ->
                     BandCard(band = band, navController = navController)
                 }
             }
+            }
+            
+            // Alphabetical index on the right side
+            AlphabeticalIndex(
+                availableLetters = availableLetters,
+                onLetterClick = { letter ->
+                    letterToIndex[letter]?.let { index ->
+                        coroutineScope.launch {
+                            listState.animateScrollToItem(index)
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .padding(
+                        top = 16.dp, 
+                        bottom = 80.dp, // Add bottom padding to avoid FAB
+                        start = 8.dp, 
+                        end = 8.dp
+                    )
+            )
         }
         
         FloatingActionButton(
