@@ -7,6 +7,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,12 +21,30 @@ import com.simonanger.gigmatcher.data.GenreCategories
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateGigScreen(bands: List<Band>, onGigCreated: (Gig) -> Unit) {
-    var title by remember { mutableStateOf("") }
-    var selectedGenres by remember { mutableStateOf(listOf<String>()) }
-    var selectedCountry by remember { mutableStateOf("") }
-    var selectedCity by remember { mutableStateOf("") }
-    var promoterName by remember { mutableStateOf("") }
+fun CreateGigScreen(
+    bands: List<Band>, 
+    onGigCreated: (Gig) -> Unit,
+    existingGig: Gig? = null,
+    onBackClick: (() -> Unit)? = null
+) {
+    var title by remember { mutableStateOf(existingGig?.title ?: "") }
+    var selectedGenres by remember { mutableStateOf(existingGig?.genres ?: listOf<String>()) }
+    // Try to guess country from existing gig's city by checking bands
+    var selectedCountry by remember { 
+        mutableStateOf(
+            if (existingGig != null) {
+                // Find a band from the same city to determine country
+                bands.find { band ->
+                    val bandCity = band.location.split(",").first().trim()
+                    bandCity == existingGig.city
+                }?.country ?: ""
+            } else {
+                ""
+            }
+        ) 
+    }
+    var selectedCity by remember { mutableStateOf(existingGig?.city ?: "") }
+    var promoterName by remember { mutableStateOf(existingGig?.promoterName ?: "") }
     var genreExpanded by remember { mutableStateOf(false) }
     var selectedGenreCategory by remember { mutableStateOf("") }
     var categoryExpanded by remember { mutableStateOf(false) }
@@ -103,11 +122,29 @@ fun CreateGigScreen(bands: List<Band>, onGigCreated: (Gig) -> Unit) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            text = "Create New Gig",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
-        )
+        // Header with back button
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (onBackClick != null) {
+                IconButton(
+                    onClick = onBackClick,
+                    modifier = Modifier.padding(end = 8.dp)
+                ) {
+                    Icon(
+                        Icons.Default.ArrowBack,
+                        contentDescription = "Back"
+                    )
+                }
+            }
+            
+            Text(
+                text = if (existingGig != null) "Edit Gig" else "Create New Gig",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold
+            )
+        }
 
         OutlinedTextField(
             value = title,
@@ -334,12 +371,13 @@ fun CreateGigScreen(bands: List<Band>, onGigCreated: (Gig) -> Unit) {
                     }
 
                     val gig = Gig(
-                        id = System.currentTimeMillis().toString(),
+                        id = existingGig?.id ?: System.currentTimeMillis().toString(),
                         title = title,
                         genres = selectedGenres,
                         city = selectedCity,
                         promoterName = promoterName,
-                        matchingBands = matchingBands
+                        matchingBands = matchingBands,
+                        selectedBands = existingGig?.selectedBands ?: listOf()
                     )
                     onGigCreated(gig)
                 }
@@ -348,7 +386,7 @@ fun CreateGigScreen(bands: List<Band>, onGigCreated: (Gig) -> Unit) {
             enabled = title.isNotBlank() && selectedGenres.isNotEmpty() &&
                     selectedCountry.isNotBlank() && selectedCity.isNotBlank() && promoterName.isNotBlank()
         ) {
-            Text("Create Gig & Find Bands")
+            Text(if (existingGig != null) "Edit Gig" else "Create Gig & Find Bands")
         }
 
         // Preview matching bands

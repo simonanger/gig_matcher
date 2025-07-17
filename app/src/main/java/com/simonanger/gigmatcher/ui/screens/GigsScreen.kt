@@ -16,7 +16,12 @@ import com.simonanger.gigmatcher.model.Gig
 import com.simonanger.gigmatcher.ui.components.GigCard
 
 @Composable
-fun GigsScreen(gigs: List<Gig>, navController: NavController) {
+fun GigsScreen(
+    gigs: List<Gig>, 
+    navController: NavController,
+    onEditGig: ((Gig) -> Unit)? = null,
+    onDeleteGig: ((Gig) -> Unit)? = null
+) {
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
@@ -46,7 +51,12 @@ fun GigsScreen(gigs: List<Gig>, navController: NavController) {
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(gigs) { gig ->
-                        GigCard(gig = gig, navController = navController)
+                        GigCard(
+                            gig = gig, 
+                            navController = navController,
+                            onEditClick = onEditGig,
+                            onDeleteClick = onDeleteGig
+                        )
                     }
                 }
             }

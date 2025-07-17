@@ -6,31 +6,29 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.simonanger.gigmatcher.R
 import com.simonanger.gigmatcher.model.Band
+import com.simonanger.gigmatcher.ui.components.BandFilterDialog
+import com.simonanger.gigmatcher.ui.components.BandFilters
+import com.simonanger.gigmatcher.ui.components.applyBandFilters
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BandsScreen(bands: List<Band>, navController: NavController) {
-    var selectedCountry by remember { mutableStateOf("All") }
-    var countryExpanded by remember { mutableStateOf(false) }
+    var showFilterDialog by remember { mutableStateOf(false) }
+    var activeFilters by remember { mutableStateOf(BandFilters()) }
     
-    val availableCountries = remember(bands) {
-        listOf("All") + bands.map { it.country }.distinct().filter { it != "Unknown" }.sorted()
-    }
-    
-    val filteredBands = remember(bands, selectedCountry) {
-        if (selectedCountry == "All") {
-            bands
-        } else {
-            bands.filter { it.country == selectedCountry }
-        }
+    val filteredBands = remember(bands, activeFilters) {
+        applyBandFilters(bands, activeFilters)
     }
     
     Box(modifier = Modifier.fillMaxSize()) {
@@ -39,41 +37,62 @@ fun BandsScreen(bands: List<Band>, navController: NavController) {
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            Text(
-                text = "All Bands",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-
-            // Country Filter
-            ExposedDropdownMenuBox(
-                expanded = countryExpanded,
-                onExpandedChange = { countryExpanded = !countryExpanded },
-                modifier = Modifier.padding(bottom = 16.dp)
+            // Header with filter button
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                OutlinedTextField(
-                    value = selectedCountry,
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Filter by Country") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = countryExpanded) },
-                    modifier = Modifier
-                        .menuAnchor()
-                        .fillMaxWidth()
+                Text(
+                    text = "All Bands",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
                 )
-                ExposedDropdownMenu(
-                    expanded = countryExpanded,
-                    onDismissRequest = { countryExpanded = false }
+                
+                IconButton(
+                    onClick = { showFilterDialog = true }
                 ) {
-                    availableCountries.forEach { country ->
-                        DropdownMenuItem(
-                            text = { Text(country) },
-                            onClick = {
-                                selectedCountry = country
-                                countryExpanded = false
-                            }
+                    Icon(
+                        painter = painterResource(id = R.drawable.filter_list_24px),
+                        contentDescription = "Filter bands",
+                        tint = if (activeFilters.hasActiveFilters()) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+                    )
+                }
+            }
+
+            // Active filters summary
+            if (activeFilters.hasActiveFilters()) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "${activeFilters.getActiveFilterCount()} filter(s) active",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
+                        TextButton(
+                            onClick = { activeFilters = BandFilters() }
+                        ) {
+                            Text("Clear All")
+                        }
                     }
                 }
             }
@@ -103,6 +122,18 @@ fun BandsScreen(bands: List<Band>, navController: NavController) {
         ) {
             Icon(Icons.Default.Add, contentDescription = "Create Band")
         }
+    }
+    
+    // Filter dialog
+    if (showFilterDialog) {
+        BandFilterDialog(
+            bands = bands,
+            currentFilters = activeFilters,
+            onFiltersChanged = { newFilters ->
+                activeFilters = newFilters
+            },
+            onDismiss = { showFilterDialog = false }
+        )
     }
 }
 

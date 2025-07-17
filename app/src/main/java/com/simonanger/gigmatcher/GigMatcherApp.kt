@@ -101,7 +101,18 @@ fun GigMatcherApp() {
             modifier = Modifier.padding(paddingValues)
         ) {
             composable("gigs") {
-                GigsScreen(gigs = gigs, navController = navController)
+                GigsScreen(
+                    gigs = gigs, 
+                    navController = navController,
+                    onEditGig = { gig ->
+                        // Navigate to edit screen - we'll need to create this
+                        navController.navigate("edit_gig/${gig.id}")
+                    },
+                    onDeleteGig = { gig ->
+                        // Remove the gig from the list
+                        gigs = gigs.filter { it.id != gig.id }
+                    }
+                )
             }
             composable("create_gig") {
                 CreateGigScreen(
@@ -111,6 +122,23 @@ fun GigMatcherApp() {
                         navController.navigate("gig_bands/${gig.id}")
                     }
                 )
+            }
+            composable("edit_gig/{gigId}") { backStackEntry ->
+                val gigId = backStackEntry.arguments?.getString("gigId")
+                val gig = gigs.find { it.id == gigId }
+                gig?.let { currentGig ->
+                    CreateGigScreen(
+                        bands = bands,
+                        existingGig = currentGig,
+                        onGigCreated = { updatedGig ->
+                            gigs = gigs.map { g ->
+                                if (g.id == currentGig.id) updatedGig else g
+                            }
+                            navController.navigate("gigs")
+                        },
+                        onBackClick = { navController.navigate("gigs") }
+                    )
+                }
             }
             composable("bands") {
                 BandsScreen(bands = bands, navController = navController)

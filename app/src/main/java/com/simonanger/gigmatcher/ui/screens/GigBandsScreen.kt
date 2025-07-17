@@ -96,7 +96,7 @@ fun GigBandsScreen(
                 )
 
                 LazyColumn(
-                    modifier = if (availableBands.isEmpty()) {
+                    modifier = if (availableBands.isEmpty() || !showMatchingBands) {
                         Modifier.fillMaxHeight()
                     } else {
                         Modifier.heightIn(max = 200.dp)
