@@ -212,7 +212,11 @@ fun GigBandsScreen(
 
             // Show button to view more matching bands if there are available bands and they're not currently shown
             if (availableBands.isNotEmpty() && !showMatchingBands) {
-                Spacer(modifier = Modifier.weight(1f))
+                if (selectedBands.isEmpty()) {
+                    Spacer(modifier = Modifier.weight(1f))
+                } else {
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
                 Button(
                     onClick = { showMatchingBands = true },
                     modifier = Modifier.fillMaxWidth(),
