@@ -55,6 +55,9 @@ dependencies {
     implementation("androidx.compose.foundation:foundation")
     implementation("com.google.android.material:material:1.12.0")
 
+    // JSON serialization
+    implementation("com.google.code.gson:gson:2.10.1")
+    
     // Other
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")

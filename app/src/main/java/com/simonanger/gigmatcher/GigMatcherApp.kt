@@ -19,6 +19,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -27,9 +28,11 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.simonanger.gigmatcher.data.GigDataManager
 import com.simonanger.gigmatcher.data.loadBandsFromCsv
 import com.simonanger.gigmatcher.data.sampleBands
 import com.simonanger.gigmatcher.model.Gig
+import kotlinx.coroutines.launch
 import com.simonanger.gigmatcher.ui.screens.BandDetailScreen
 import com.simonanger.gigmatcher.ui.screens.BandsScreen
 import com.simonanger.gigmatcher.ui.screens.CreateBandScreen
@@ -45,9 +48,24 @@ fun GigMatcherApp() {
     var gigs by remember { mutableStateOf(listOf<Gig>()) }
     var bands by remember { mutableStateOf(sampleBands) }
     val context = LocalContext.current
+    val gigDataManager = remember { GigDataManager(context) }
+    val coroutineScope = rememberCoroutineScope()
+    
+    // Function to save gigs whenever they change
+    fun saveGigs(newGigs: List<Gig>) {
+        gigs = newGigs
+        coroutineScope.launch {
+            gigDataManager.saveGigs(newGigs)
+        }
+    }
     
     LaunchedEffect(Unit) {
         try {
+            // Load saved gigs
+            val savedGigs = gigDataManager.loadGigs()
+            gigs = savedGigs
+            
+            // Load bands from CSV
             val inputStream = context.assets.open("uk_active_bands_standardized.csv")
             val csvBands = loadBandsFromCsv(inputStream)
             bands = csvBands
@@ -109,8 +127,8 @@ fun GigMatcherApp() {
                         navController.navigate("edit_gig/${gig.id}")
                     },
                     onDeleteGig = { gig ->
-                        // Remove the gig from the list
-                        gigs = gigs.filter { it.id != gig.id }
+                        // Remove the gig from the list and save
+                        saveGigs(gigs.filter { it.id != gig.id })
                     }
                 )
             }
@@ -118,7 +136,7 @@ fun GigMatcherApp() {
                 CreateGigScreen(
                     bands = bands,
                     onGigCreated = { gig ->
-                        gigs = gigs + gig
+                        saveGigs(gigs + gig)
                         navController.navigate("gig_bands/${gig.id}")
                     }
                 )
@@ -131,9 +149,9 @@ fun GigMatcherApp() {
                         bands = bands,
                         existingGig = currentGig,
                         onGigCreated = { updatedGig ->
-                            gigs = gigs.map { g ->
+                            saveGigs(gigs.map { g ->
                                 if (g.id == currentGig.id) updatedGig else g
-                            }
+                            })
                             // Navigate back to band selection after editing
                             navController.navigate("gig_bands/${updatedGig.id}")
                         },
@@ -172,8 +190,8 @@ fun GigMatcherApp() {
                         navController = navController,
                         onBackClick = { navController.navigate("gigs") },
                         onBandSelected = { band ->
-                            // Update the gig with the selected band
-                            gigs = gigs.map { g ->
+                            // Update the gig with the selected band and save
+                            saveGigs(gigs.map { g ->
                                 if (g.id == currentGig.id) {
                                     val updatedSelectedBands = if (g.selectedBands.contains(band)) {
                                         g.selectedBands - band
@@ -184,7 +202,7 @@ fun GigMatcherApp() {
                                 } else {
                                     g
                                 }
-                            }
+                            })
                         },
                         onEditGig = { gig ->
                             navController.navigate("edit_gig/${gig.id}")
